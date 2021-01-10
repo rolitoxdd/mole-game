@@ -9,6 +9,8 @@
 //   })
 // })
 
+let score = 0;
+
 
 //////DEFINICION DE TIEMPOS DE STATUS:
 function getSadInterval() { // 1 second
@@ -25,6 +27,10 @@ function getHungryInterval(){ // 1 to 4 seconds
 }
 function getHappyInterval(){
   return Date.now()+1500;
+}
+////////kingStatus:
+function getKingStatus(){
+  return Math.random()< .2;
 }
 //////////////////////////////////////////////////////
 
@@ -99,19 +105,21 @@ const moles = [
 function getNextStatus(mole) {
   switch (mole.status) {
     case "sad":
+    case "fed":
       mole.status = "leaving";
       mole.next = getLeavingInterval();
-      mole.node.firstElementChild.src = "./images/mole-leaving.png";
+      mole.node.firstElementChild.src = mole.king ? "./images/king-mole-leaving.png" : "./images/mole-leaving.png";
       break;
     case "leaving":
       mole.status = "gone";
       mole.next = getGoneInterval();
       mole.node.firstElementChild.classList.toggle("gone");
-      mole.node.firstElementChild.src = "./images/mole-hungry.png";
       break;
     case "gone":
       mole.status = "hungry";
       mole.next = getHungryInterval();
+      mole.king = getKingStatus(); //<-- 10% probabilidad
+      mole.node.firstElementChild.src = mole.king ? "./images/king-mole-hungry.png" : "./images/mole-hungry.png";
       mole.node.firstElementChild.classList.toggle("gone");
       mole.node.firstElementChild.classList.toggle("hungry");
       break;
@@ -119,12 +127,8 @@ function getNextStatus(mole) {
       mole.status = "sad";
       mole.next = getSadInterval();
       mole.node.firstElementChild.classList.toggle("hungry");
-      mole.node.firstElementChild.src = "./images/mole-sad.png";
+      mole.node.firstElementChild.src = mole.king ? "./images/king-mole-sad.png" : "./images/mole-sad.png";
       break;
-    case "fed":
-      mole.status = "leaving";
-      mole.next = getLeavingInterval();
-      mole.node.firstElementChild.src = "./images/mole-leaving.png"
   }
 }
 /////////////////////////////////////////////
@@ -148,17 +152,32 @@ function nextFrame() {
 nextFrame();
 ///////////////////////////////////////////////////////
 
-
-function feed(ev){
+///////////////////MANEJO DE FEED DE MOLES:
+function feed(ev) {
   if (ev.target.classList.contains('hungry')){
     const index = ev.target.dataset.index;
     const mole = moles[index]
     mole.status = "fed";
     mole.next = getHappyInterval();
-    mole.node.firstElementChild.src = "./images/mole-fed.png";
+    mole.node.firstElementChild.src = mole.king ? "./images/king-mole-fed.png" : "./images/mole-fed.png";
     mole.node.firstElementChild.classList.toggle("hungry")
+    
+    score += mole.king ? 2 : 1;
+
+    const $wormContainer = document.querySelector('.worm-container')
+    $wormContainer.style.width = String(score * 10.5)+'%'
+
+    if (score>=10) {
+      win();
+    }
   }
 }
+
+function win() {
+  document.querySelector(".bg").classList.add("hide")
+  document.querySelector(".win").classList.remove("hide")
+}
+
 
 
 document.querySelector('.bg')
